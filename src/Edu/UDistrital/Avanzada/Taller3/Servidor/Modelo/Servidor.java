@@ -13,24 +13,24 @@ import java.util.concurrent.Executors;
  */
 public class Servidor {
     
-    private ExecutorService executorService;
-    
-    public Servidor() {
-        this.executorService = Executors.newFixedThreadPool(2);
-    }
-    
-    /**
-     * Inicia la ejecución de dos luchadores en threads separados
-     */
-    public void iniciarCombate(Luchador luchador1, Luchador luchador2) {
-        executorService.execute(luchador1);
-        executorService.execute(luchador2);
-    }
-    
-    /**
-     * Detiene el executor service
-     */
-    public void detenerServidor() {
-        executorService.shutdown();
-    }
+//    private ExecutorService executorService;
+//    
+//    public Servidor() {
+//        this.executorService = Executors.newFixedThreadPool(2);
+//    }
+//    
+//    /**
+//     * Inicia la ejecución de dos luchadores en threads separados
+//     */
+//    public void iniciarCombate(Luchador luchador1, Luchador luchador2) {
+//        executorService.execute(luchador1);
+//        executorService.execute(luchador2);
+//    }
+//    
+//    /**
+//     * Detiene el executor service
+//     */
+//    public void detenerServidor() {
+//        executorService.shutdown();
+//    }
 }
