@@ -31,7 +31,7 @@ public class Luchador {
     public void incrementarVictorias() {
         this.victorias++;
     }
-    
+        
     // Getters
     public String getNombre() 
     { return nombre; }

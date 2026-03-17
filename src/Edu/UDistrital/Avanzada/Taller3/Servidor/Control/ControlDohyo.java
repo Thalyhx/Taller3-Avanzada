@@ -18,15 +18,29 @@ import java.util.concurrent.TimeUnit;
 public class ControlDohyo {
     private Dohyo dohyo;
     private ExecutorService executor;
+    private ControlKimarite controlKimarite;
     
     //Contructor Vacio
 
     public ControlDohyo() {
     }
     
+      /**
+     * Constructor que recibe el control de kimarites
+     */
+    public ControlDohyo(ControlKimarite controlKimarite) {
+        this.controlKimarite = controlKimarite;
+    }
     
+    /**
+     * Inicia un combate entre dos luchadores
+     */
     public void iniciarCombate(Luchador l1, Luchador l2) {
-        this.dohyo = new Dohyo();
+        // Crear el dohyō con el control de kimarites
+        this.dohyo = new Dohyo(controlKimarite);
+//        this.dohyo.setLuchadores(l1, l2);
+        
+        // Crear executor con 2 hilos
         this.executor = Executors.newFixedThreadPool(2);
         
         // Crear controles para cada luchador
@@ -38,6 +52,10 @@ public class ControlDohyo {
         executor.execute(ctrl2);
     }
     
+    /**
+     * Espera a que termine el combate y retorna el ganador
+     * Incrementa las victorias del ganador
+     */
     public Luchador esperarResultado() {
         executor.shutdown();
         try {
@@ -45,7 +63,15 @@ public class ControlDohyo {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-        return dohyo.getGanador();
+         // Obtener el ganador
+        Luchador ganador = dohyo.getGanador();
+        
+        // Incrementar victorias del ganador
+        if (ganador != null) {
+            ganador.incrementarVictorias();
+        }
+        
+        return ganador;
     }
 }
 
