@@ -4,32 +4,32 @@
  */
 package Edu.UDistrital.Avanzada.Taller3.Servidor.Control;
 
-import Edu.UDistrital.Avanzada.Taller3.Servidor.Modelo.Dohyo;
 import Edu.UDistrital.Avanzada.Taller3.Servidor.Modelo.Luchador;
 import java.util.Random;
 
 /**
- *
+ * Control de un luchador en el combate
+ * Ejecuta turnos sincronizados con ControlDohyo
  * @author nath
  */
 
 public class ControlLuchador implements Runnable {
     private Luchador luchador;
-    private Dohyo dohyo;
+    private ControlDohyo controlDohyo;
     private int id;
     private Random random;
     
-    public ControlLuchador(Luchador luchador, Dohyo dohyo, int id) {
+    public ControlLuchador(Luchador luchador, ControlDohyo controlDohyo, int id) {
         this.luchador = luchador;
-        this.dohyo = dohyo;
+        this.controlDohyo = controlDohyo;
         this.id = id;
         this.random = new Random();
     }
     
     @Override
     public void run() {
-        while (dohyo.isCombateActivo()) {
-            // Espera aleatoria (
+        while (controlDohyo.isCombateActivo()) {
+            // Espera aleatoria 
             
             try {
                 Thread.sleep(random.nextInt(501));
@@ -38,7 +38,7 @@ public class ControlLuchador implements Runnable {
             }
             
             // Atacar
-            dohyo.ejecutarTurno(luchador, id);
+            controlDohyo.ejecutarTurno(luchador, id);
         }
     }
 }

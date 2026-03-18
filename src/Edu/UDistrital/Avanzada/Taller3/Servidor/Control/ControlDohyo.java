@@ -4,57 +4,123 @@
  */
 package Edu.UDistrital.Avanzada.Taller3.Servidor.Control;
 
-import Edu.UDistrital.Avanzada.Taller3.Servidor.Modelo.Dohyo;
 import Edu.UDistrital.Avanzada.Taller3.Servidor.Modelo.Luchador;
+import Edu.UDistrital.Avanzada.Taller3.Servidor.Modelo.Kimarite;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
- *
+ * Control del Dohyō (ring de sumo)
+ * Orquesta el combate y gestiona los resultados
  * @author nath
  */
 
+
 public class ControlDohyo {
-    private Dohyo dohyo;
+    
     private ExecutorService executor;
     private ControlKimarite controlKimarite;
+    
+    // Estado del combate
+    private int turnoActual = 1;
+    private boolean combateActivo = true;
+    private Luchador ganador;
+    private List<Map<String, Object>> historialTurnos;
+    private int numeroTurno = 0;
+    
     
     //Contructor Vacio
 
     public ControlDohyo() {
     }
     
-      /**
-     * Constructor que recibe el control de kimarites
-     */
     public ControlDohyo(ControlKimarite controlKimarite) {
         this.controlKimarite = controlKimarite;
+        this.historialTurnos = new ArrayList<>();
     }
     
     /**
      * Inicia un combate entre dos luchadores
      */
     public void iniciarCombate(Luchador l1, Luchador l2) {
-        // Crear el dohyō con el control de kimarites
-        this.dohyo = new Dohyo(controlKimarite);
-//        this.dohyo.setLuchadores(l1, l2);
+
+        // Reinicializar estado del combate
+        this.turnoActual = 1;
+        this.combateActivo = true;
+        this.ganador = null;
+        this.numeroTurno = 0;
+        this.historialTurnos = new ArrayList<>();
         
         // Crear executor con 2 hilos
         this.executor = Executors.newFixedThreadPool(2);
         
         // Crear controles para cada luchador
-        ControlLuchador ctrl1 = new ControlLuchador(l1, dohyo, 1);
-        ControlLuchador ctrl2 = new ControlLuchador(l2, dohyo, 2);
+        ControlLuchador ctrl1 = new ControlLuchador(l1, this, 1);
+        ControlLuchador ctrl2 = new ControlLuchador(l2, this, 2);
         
-        // Sincroniza luchadores con el dohyō
+        // Ejecutar en hilos separados
         executor.execute(ctrl1);
         executor.execute(ctrl2);
+        
     }
     
     /**
-     * Espera a que termine el combate y retorna el ganador
-     * Incrementa las victorias del ganador
+     * Ejecuta un turno del combate
+     * Sincroniza para que solo un luchador ataque por turno
+     */
+    public synchronized void ejecutarTurno(Luchador atacante, int idLuchador) {
+        
+        // Esperar si no es el turno
+        while (idLuchador != turnoActual && combateActivo) {
+            try {
+                wait();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        // Si el combate ya acabó, salir
+        if (!combateActivo) {
+            return;
+        }
+
+        // Luchador ejecuta su técnica
+        Kimarite tecnica = atacante.obtenerKimariteAleatorio();
+        
+        //evalúa si sacó al oponente
+        boolean sacoAlOponente = controlKimarite.evaluarExito(tecnica);
+        
+        // Registrar el turno en el historial
+        numeroTurno++;
+        Map<String, Object> turno = new HashMap<>();
+        turno.put("numero", numeroTurno);
+        turno.put("luchador", atacante.getNombre());
+        turno.put("kimarite", tecnica.getNombre());
+        turno.put("probabilidad", tecnica.getProbabilidadExito());
+        turno.put("exito", sacoAlOponente);
+        historialTurnos.add(turno);
+
+        //Determinar resultado
+        if (sacoAlOponente) {
+            // Gana
+            combateActivo = false;
+            ganador = atacante;
+        } else {
+            // Pasar el turno al rival
+            turnoActual = (idLuchador == 1) ? 2 : 1;
+        }
+
+        //Despertar al otro luchador
+        notifyAll();
+    }
+    
+    /**
+     * Espera a que termine el combate, incrementa victorias y retorna el ganador
      */
     public Luchador esperarResultado() {
         executor.shutdown();
@@ -63,8 +129,6 @@ public class ControlDohyo {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-         // Obtener el ganador
-        Luchador ganador = dohyo.getGanador();
         
         // Incrementar victorias del ganador
         if (ganador != null) {
@@ -72,6 +136,27 @@ public class ControlDohyo {
         }
         
         return ganador;
+    }
+    
+    /**
+     * Verifica si el combate está activo
+     */
+    public boolean isCombateActivo() {
+        return combateActivo;
+    }
+    
+    /**
+     * Obtiene el ganador del combate
+     */
+    public Luchador getGanador() {
+        return ganador;
+    }
+    
+    /**
+     * Obtiene el historial de turnos
+     */
+    public List<Map<String, Object>> getHistorialTurnos() {
+        return historialTurnos;
     }
 }
 

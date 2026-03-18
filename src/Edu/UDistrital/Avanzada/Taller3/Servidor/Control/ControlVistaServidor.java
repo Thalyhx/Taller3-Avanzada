@@ -2,14 +2,13 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package edu.UDistrital.Avanzada.Taller3.Servidor.Control;
+package Edu.UDistrital.Avanzada.Taller3.Servidor.Control;
 
-import Edu.UDistrital.Avanzada.Taller3.Servidor.Control.ControlDohyo;
 import Edu.UDistrital.Avanzada.Taller3.Servidor.Control.ControlKimarite;
 
 
 /**
- *
+ * Control de la Vista del Servidor
  * @author nath
  */
 
@@ -26,12 +25,7 @@ public class ControlVistaServidor {
     }
     
     /**
-     * Carga el archivo de kimarites y muestra mensaje de resultado
-     * @param rutaArchivo ru    ta del archivo seleccionado
-     */
-    
-    /**
-     * Carga el archivo de kimarites y muestra mensaje de resultado
+     * Carga el archivo de kimarites
      * @param rutaArchivo ruta del archivo seleccionado
      * @return si se cargo el properties
      */
