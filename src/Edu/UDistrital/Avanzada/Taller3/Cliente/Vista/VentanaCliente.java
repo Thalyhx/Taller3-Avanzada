@@ -4,14 +4,11 @@
  */
 package Edu.UDistrital.Avanzada.Taller3.Cliente.Vista;
 
-import Edu.UDistrital.Avanzada.Taller3.Cliente.Modelo.ConfigConexion;
+import Edu.UDistrital.Avanzada.Taller3.Cliente.Control.ControlVista;
 import Edu.UDistrital.Avanzada.Taller3.Cliente.Control.KimariteLoader;
-import Edu.UDistrital.Avanzada.Taller3.Cliente.Control.ControlSocket;
-import Edu.UDistrital.Avanzada.Taller3.Cliente.Control.ThreadCliente;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.util.ArrayList;
 
 /**
  * Ventana Principal del Cliente Sumo
@@ -19,7 +16,7 @@ import java.util.ArrayList;
  */
 public class VentanaCliente extends JFrame {
     
-    private ControlSocket controlSocket;
+    private ControlVista controlVista;
     private JTextField txtNombre;
     private JTextField txtPeso;
     private JComboBox<String> cmbTecnicas;
@@ -31,18 +28,19 @@ public class VentanaCliente extends JFrame {
     private JButton btnConectar;
     private JTextArea txtMensajes;
     private JLabel lblEstado;
-    private File archivoTecnicas;
-    private KimariteLoader.Kimarite[] todasLasTecnicas;
-    private ArrayList<KimariteLoader.Kimarite> tecnicasSeleccionadas;
     
-    public VentanaCliente() {
+    /**
+     * Constructor único 
+     */
+    public VentanaCliente(ControlVista controlVista) {
+        this.controlVista = controlVista;
+        
         setTitle("Cliente Sumo");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(800, 900);
         setLocationRelativeTo(null);
         setResizable(false);
         
-        tecnicasSeleccionadas = new ArrayList<>();
         initComponents();
     }
     
@@ -84,7 +82,7 @@ public class VentanaCliente extends JFrame {
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         btnSeleccionarArchivo = new JButton("Seleccionar archivo kimarites.properties");
-        btnSeleccionarArchivo.addActionListener(e -> seleccionarArchivo());
+        btnSeleccionarArchivo.addActionListener(e -> onSeleccionarArchivo());
         panelDatos.add(btnSeleccionarArchivo, gbc);
         gbc.gridwidth = 1;
         
@@ -111,7 +109,7 @@ public class VentanaCliente extends JFrame {
         gbcTec.fill = GridBagConstraints.NONE;
         btnAgregarTecnica = new JButton("Agregar");
         btnAgregarTecnica.setEnabled(false);
-        btnAgregarTecnica.addActionListener(e -> agregarTecnica());
+        btnAgregarTecnica.addActionListener(e -> onAgregarTecnica());
         panelTecnicas.add(btnAgregarTecnica, gbcTec);
         
         // Seleccionadas
@@ -130,7 +128,7 @@ public class VentanaCliente extends JFrame {
         JScrollPane scrollTecnicas = new JScrollPane(lstTecnicasSeleccionadas);
         panelSeleccionadas.add(scrollTecnicas, BorderLayout.CENTER);
         btnEliminarTecnica = new JButton("Eliminar");
-        btnEliminarTecnica.addActionListener(e -> eliminarTecnica());
+        btnEliminarTecnica.addActionListener(e -> onEliminarTecnica());
         panelSeleccionadas.add(btnEliminarTecnica, BorderLayout.SOUTH);
         panelTecnicas.add(panelSeleccionadas, gbcTec);
         gbcTec.gridwidth = 1;
@@ -139,7 +137,7 @@ public class VentanaCliente extends JFrame {
         JPanel panelAccion = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
         btnConectar = new JButton("Conectar al Servidor");
         btnConectar.setFont(new Font("Arial", Font.BOLD, 12));
-        btnConectar.addActionListener(e -> conectarAlServidor());
+        btnConectar.addActionListener(e -> onConectarAlServidor());
         btnConectar.setEnabled(false);
         panelAccion.add(btnConectar);
         
@@ -175,12 +173,10 @@ public class VentanaCliente extends JFrame {
         add(panelPrincipal);
     }
     
-    /**
-     * Abre JFileChooser para seleccionar archivo de técnicas
-     */
-    private void seleccionarArchivo() {
+    // ========== EVENT HANDLERS ==========
+    
+    private void onSeleccionarArchivo() {
         JFileChooser fileChooser = new JFileChooser();
-        
         javax.swing.filechooser.FileNameExtensionFilter filter = 
             new javax.swing.filechooser.FileNameExtensionFilter(
                 "Archivos Properties (*.properties)", "properties"
@@ -190,164 +186,63 @@ public class VentanaCliente extends JFrame {
         fileChooser.setAcceptAllFileFilterUsed(false);
         
         int resultado = fileChooser.showOpenDialog(this);
-        
         if (resultado == JFileChooser.APPROVE_OPTION) {
-            archivoTecnicas = fileChooser.getSelectedFile();
-            
-            // Cargar todas las técnicas
-            todasLasTecnicas = KimariteLoader.cargarTecnicas(archivoTecnicas);
-            
-            if (todasLasTecnicas.length > 0) {
-                // Limpiar combo box
-                cmbTecnicas.removeAllItems();
-                
-                // Agregar técnicas al combo box
-                for (KimariteLoader.Kimarite kimarite : todasLasTecnicas) {
-                    cmbTecnicas.addItem(kimarite.toString());
-                }
-                
-                cmbTecnicas.setEnabled(true);
-                btnAgregarTecnica.setEnabled(true);
-                mostrarMensaje("✓ " + todasLasTecnicas.length + " técnicas cargadas");
-            } else {
-                mostrarMensaje("❌ No se cargaron técnicas");
-            }
+            controlVista.onSeleccionarArchivo(fileChooser.getSelectedFile());
         }
     }
     
-    /**
-     * Agrega la técnica seleccionada a la lista
-     */
-    private void agregarTecnica() {
+    private void onAgregarTecnica() {
         int indice = cmbTecnicas.getSelectedIndex();
-        
-        if (indice >= 0) {
-            KimariteLoader.Kimarite kimarite = todasLasTecnicas[indice];
-            
-            // Verificar que no esté duplicada
-            for (KimariteLoader.Kimarite k : tecnicasSeleccionadas) {
-                if (k.getNombre().equals(kimarite.getNombre())) {
-                    mostrarMensaje("⚠ Ya está agregada: " + kimarite.getNombre());
-                    return;
-                }
-            }
-            
-            // Agregar a la lista de seleccionadas
-            tecnicasSeleccionadas.add(kimarite);
-            modeloLista.addElement(kimarite.toString());
-            
-            // Habilitar botón conectar si hay al menos una técnica
-            if (tecnicasSeleccionadas.size() > 0) {
-                btnConectar.setEnabled(true);
-            }
-            
-            mostrarMensaje("✓ Agregada: " + kimarite.getNombre());
-        }
+        controlVista.onAgregarTecnica(indice);
     }
     
-    /**
-     * Elimina la técnica seleccionada de la lista
-     */
-    private void eliminarTecnica() {
+    private void onEliminarTecnica() {
         int indice = lstTecnicasSeleccionadas.getSelectedIndex();
-        
-        if (indice >= 0) {
-            KimariteLoader.Kimarite eliminada = tecnicasSeleccionadas.get(indice);
-            tecnicasSeleccionadas.remove(indice);
-            modeloLista.remove(indice);
-            
-            mostrarMensaje("✓ Eliminada: " + eliminada.getNombre());
-            
-            if (tecnicasSeleccionadas.isEmpty()) {
-                btnConectar.setEnabled(false);
-            }
+        controlVista.onEliminarTecnica(indice);
+    }
+    
+    private void onConectarAlServidor() {
+        String nombre = txtNombre.getText();
+        String peso = txtPeso.getText();
+        controlVista.onConectarAlServidor(nombre, peso);
+    }
+    
+    // ========== MÉTODOS DE ACTUALIZACIÓN (llamados por Control) ==========
+    
+    public void habilitarComboBoxTecnicas() {
+        cmbTecnicas.setEnabled(true);
+        btnAgregarTecnica.setEnabled(true);
+    }
+    
+    public void actualizarComboBoxTecnicas(KimariteLoader.Kimarite[] tecnicas) {
+        cmbTecnicas.removeAllItems();
+        for (KimariteLoader.Kimarite kimarite : tecnicas) {
+            cmbTecnicas.addItem(kimarite.toString());
         }
     }
     
-    /**
-     * Conecta con el servidor y envía los datos del luchador
-     */
-    private void conectarAlServidor() {
-        try {
-            // Validar datos
-            if (txtNombre.getText().isEmpty()) {
-                mostrarMensaje("❌ Ingresa el nombre del luchador");
-                return;
-            }
-            
-            if (txtPeso.getText().isEmpty()) {
-                mostrarMensaje("❌ Ingresa el peso del luchador");
-                return;
-            }
-            
-            if (tecnicasSeleccionadas.isEmpty()) {
-                mostrarMensaje("❌ Selecciona al menos una técnica");
-                return;
-            }
-            
-            String nombre = txtNombre.getText();
-            double peso = Double.parseDouble(txtPeso.getText());
-            
-            // Convertir a array
-            KimariteLoader.Kimarite[] kimarites = tecnicasSeleccionadas.toArray(
-                new KimariteLoader.Kimarite[0]
-            );
-            
-            // Crear configuración (localhost puerto 5000)
-            ConfigConexion config = new ConfigConexion("localhost", 5000);
-            
-            // Crear control socket
-            controlSocket = new ControlSocket(config);
-            
-            mostrarMensaje("═══════════════════════════════════════");
-            mostrarMensaje("Conectando con servidor...");
-            lblEstado.setText("Estado: Conectando...");
-            btnConectar.setEnabled(false);
-            
-            // Conectar
-            controlSocket.conectar();
-            mostrarMensaje("✓ Conectado al servidor");
-            
-            // Enviar datos del luchador
-            controlSocket.enviarLuchador(nombre, peso, kimarites);
-            mostrarMensaje("✓ Datos enviados:");
-            mostrarMensaje("  • Luchador: " + nombre);
-            mostrarMensaje("  • Peso: " + peso + " kg");
-            mostrarMensaje("  • Técnicas: " + kimarites.length);
-            
-            for (KimariteLoader.Kimarite k : kimarites) {
-                mostrarMensaje("    - " + k.toString());
-            }
-            
-            // Iniciar thread para escuchar respuestas
-            ThreadCliente threadCliente = new ThreadCliente(controlSocket.getEntrada(), this);
-            threadCliente.start();
-            
-            lblEstado.setText("Estado: Conectado - Esperando combate...");
-            mostrarMensaje("═══════════════════════════════════════");
-            
-        } catch (NumberFormatException e) {
-            mostrarMensaje("❌ El peso debe ser un número");
-            btnConectar.setEnabled(true);
-        } catch (Exception e) {
-            mostrarMensaje("❌ Error de conexión: " + e.getMessage());
-            btnConectar.setEnabled(true);
-            lblEstado.setText("Estado: Error");
-        }
+    public void agregarTecnicaALista(String tecnica) {
+        modeloLista.addElement(tecnica);
     }
     
-    /**
-     * Muestra mensaje en el área de mensajes
-     */
+    public void eliminarTecnicaDeLista(int indice) {
+        modeloLista.remove(indice);
+    }
+    
+    public void habilitarBotonConectar() {
+        btnConectar.setEnabled(true);
+    }
+    
+    public void deshabilitarBotonConectar() {
+        btnConectar.setEnabled(false);
+    }
+    
     public void mostrarMensaje(String mensaje) {
         txtMensajes.append(mensaje + "\n");
         txtMensajes.setCaretPosition(txtMensajes.getDocument().getLength());
     }
     
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            VentanaCliente ventana = new VentanaCliente();
-            ventana.setVisible(true);
-        });
+    public void actualizarEstado(String estado) {
+        lblEstado.setText(estado);
     }
 }
