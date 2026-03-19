@@ -22,25 +22,46 @@ public class ControlSocket {
     public ControlSocket(ConfigConexion config) {
         this.config = config;
     }
-
+    
+     /**
+     * Conecta con el servidor
+     */
     public void conectar() throws IOException {
         socket = new java.net.Socket(config.getIp(), config.getPuerto());
         entrada = new DataInputStream(socket.getInputStream());
         salida = new DataOutputStream(socket.getOutputStream());
     }
-
-    public void enviarLuchador(String nombre, double peso, String[] tecnicas) throws IOException {
-
+    
+    /**
+     * Envía los datos del luchador con sus técnicas
+     * @param nombre nombre del luchador
+     * @param peso peso del luchador
+     * @param kimarites array de Kimarite del luchador
+     */
+    public void enviarLuchador(String nombre, double peso, KimariteLoader.Kimarite[] kimarites) throws IOException {
         salida.writeUTF(nombre);
         salida.writeDouble(peso);
-        salida.writeInt(tecnicas.length);
+        salida.writeInt(kimarites.length);
 
-        for (String tecnica : tecnicas) {
-            salida.writeUTF(tecnica);
+        for (KimariteLoader.Kimarite kimarite : kimarites) {
+            salida.writeUTF(kimarite.getNombre());
         }
+        
+        salida.flush();
     }
 
+    /**
+     * Obtiene el stream de entrada
+     */
     public DataInputStream getEntrada() {
         return entrada;
     }
+    
+    /**
+     * Obtiene el stream de salida
+     */
+    public DataOutputStream getSalida() {
+        return salida;
+    }
+    
 }
