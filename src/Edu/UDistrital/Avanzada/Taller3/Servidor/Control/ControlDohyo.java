@@ -6,10 +6,16 @@ package Edu.UDistrital.Avanzada.Taller3.Servidor.Control;
 
 import Edu.UDistrital.Avanzada.Taller3.Servidor.Modelo.Luchador;
 import Edu.UDistrital.Avanzada.Taller3.Servidor.Modelo.Kimarite;
+import Edu.UDistrital.Avanzada.Taller3.Servidor.Modelo.Servidor;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -25,6 +31,8 @@ public class ControlDohyo {
     
     private ExecutorService executor;
     private ControlKimarite controlKimarite;
+    private Servidor servidor;
+    private Properties configuracion;
     
     // Estado del combate
     private int turnoActual = 1;
@@ -39,9 +47,60 @@ public class ControlDohyo {
     public ControlDohyo() {
     }
     
-    public ControlDohyo(ControlKimarite controlKimarite) {
+   /**
+     * Constructor con servidor y control de kimarites
+     */
+    public ControlDohyo(Servidor servidor, ControlKimarite controlKimarite) {
+        this.servidor = servidor;
         this.controlKimarite = controlKimarite;
+        this.configuracion = servidor.getConfiguracion();
         this.historialTurnos = new ArrayList<>();
+        
+        // Cargar kimarites
+        try {
+            controlKimarite.cargarKimaritesDesdeArchivo(servidor.getArchivoConfig());
+        } catch (Exception e) {
+        }
+    }
+    /**
+     * Recibe un luchador desde el cliente
+     */
+    public Luchador recibirLuchador(Socket cliente) throws IOException {
+        DataInputStream entrada = new DataInputStream(cliente.getInputStream());
+        DataOutputStream salida = new DataOutputStream(cliente.getOutputStream());
+        
+        //Recibe datos del luchador
+        String nombre = entrada.readUTF();
+        double peso = entrada.readDouble();
+        int cantidadTecnicas = entrada.readInt();
+        
+        String[] nombresTecnicas = new String[cantidadTecnicas];
+        for (int i = 0; i < cantidadTecnicas; i++) {
+            nombresTecnicas[i] = entrada.readUTF();
+        }
+        
+        //Crea array de Kimarite con probabilidades desde properties
+        Kimarite[] tecnicas = new Kimarite[cantidadTecnicas];
+        for (int i = 0; i < cantidadTecnicas; i++) {
+            String nombre_tecnica = nombresTecnicas[i];
+            String descripcion = configuracion.getProperty(
+                nombre_tecnica, "Técnica sin descripción"
+            );
+            double probabilidad = Double.parseDouble(
+                configuracion.getProperty(nombre_tecnica + ".probabilidad", "0.3")
+            );
+            tecnicas[i] = new Kimarite(nombre_tecnica, descripcion, probabilidad);
+        }
+        
+        // Crea luchador
+        Luchador luchador = new Luchador(nombre, (int) peso, tecnicas);
+        
+        // Envia confirmación
+        salida.writeInt(1);
+        salida.writeUTF("Luchador registrado correctamente");
+        salida.flush();
+        
+        return luchador;
     }
     
     /**

@@ -6,7 +6,7 @@ package Edu.UDistrital.Avanzada.Taller3.Cliente.Modelo;
 
 /**
  *
- * @author natha
+ * @author nath
  */
 public class Socket {
     

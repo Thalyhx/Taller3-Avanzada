@@ -4,48 +4,34 @@
  */
 package Edu.UDistrital.Avanzada.Taller3.Servidor.Control;
 
-import Edu.UDistrital.Avanzada.Taller3.Servidor.Control.ControlKimarite;
-
+import java.io.File;
 
 /**
  * Control de la Vista del Servidor
  * @author nath
  */
-
 public class ControlVistaServidor {
     
-    private ControlKimarite controlKimarite;
-    private ControlDohyo controlDohyo;
+    private ControlPrincipalServidor controlPrincipal;
     
+    /**
+     * Constructor
+     */
     public ControlVistaServidor() {
-        this.controlKimarite = new ControlKimarite();
-        
-        // Inicializar ControlDohyo con ControlKimarite
-        this.controlDohyo = new ControlDohyo(controlKimarite);
+        this.controlPrincipal = new ControlPrincipalServidor();
     }
     
     /**
-     * Carga el archivo de kimarites
-     * @param rutaArchivo ruta del archivo seleccionado
-     * @return si se cargo el properties
+     * Inicializa el servidor
      */
-    public boolean cargarKimarites(String rutaArchivo) {
-        if (rutaArchivo == null || rutaArchivo.isEmpty()) {
-            return false;
-        }
-        
-        java.io.File archivo = new java.io.File(rutaArchivo);
-        boolean cargado = controlKimarite.cargarKimaritesDesdeArchivo(archivo);
-        
-        return cargado;
+    public boolean inicializarServidor(File archivoConfig) {
+        return controlPrincipal.inicializarServidor(archivoConfig);
     }
     
-    public ControlKimarite getControlKimarite() {
-        return controlKimarite;
+    /**
+     * Obtiene el control principal
+     */
+    public ControlPrincipalServidor getControlPrincipal() {
+        return controlPrincipal;
     }
-    
-    public ControlDohyo getControlDohyo() {
-        return controlDohyo;
-    }
-
 }
