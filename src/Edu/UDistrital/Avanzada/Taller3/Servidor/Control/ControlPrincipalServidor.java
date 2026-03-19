@@ -4,9 +4,10 @@
  */
 package Edu.UDistrital.Avanzada.Taller3.Servidor.Control;
 
-
+import Edu.UDistrital.Avanzada.Taller3.Servidor.Vista.VentanaPrincipalServidor;
 import Edu.UDistrital.Avanzada.Taller3.Servidor.Modelo.Servidor;
 import Edu.UDistrital.Avanzada.Taller3.Servidor.Modelo.Luchador;
+import javax.swing.SwingUtilities;
 import java.io.File;
 import java.net.Socket;
 import java.util.List;
@@ -21,11 +22,19 @@ public class ControlPrincipalServidor {
 
     private Servidor servidor;
     private ControlDohyo controlDohyo;
+    private VentanaPrincipalServidor vista;
+    private ControlVistaServidor controlVista;
     
     /**
-     * Constructor vacío
+     * Constructor - Instancia ControlVistaServidor que instancia la Vista
      */
     public ControlPrincipalServidor() {
+        // Instanciar en EDT (Event Dispatch Thread)
+        SwingUtilities.invokeLater(() -> {
+            this.controlVista = new ControlVistaServidor(this);
+            this.vista = controlVista.getVista();
+            this.vista.setVisible(true);
+        });
     }
     
     /**
@@ -46,20 +55,8 @@ public class ControlPrincipalServidor {
 
             return true;
         } catch (Exception e) {
-
             return false;
         }
-    }
-    
-    /**
-     * Obtiene el historial de turnos del último combate
-     * @return List de Map con datos de cada turno
-     */
-    public List<Map<String, Object>> obtenerHistorialTurnos() {
-        if (controlDohyo != null) {
-            return controlDohyo.getHistorialTurnos();
-        }
-        return null;
     }
     
     /**
@@ -93,6 +90,46 @@ public class ControlPrincipalServidor {
     }
     
     /**
+     * Inicia un combate entre dos luchadores
+     */
+    public void iniciarCombate(Luchador l1, Luchador l2) {
+        if (controlDohyo == null) {
+            throw new RuntimeException("ControlDohyo no inicializado");
+        }
+        controlDohyo.iniciarCombate(l1, l2);
+    }
+    
+    /**
+     * Espera a que termine el combate y retorna el ganador
+     */
+    public Luchador esperarResultado() {
+        if (controlDohyo == null) {
+            throw new RuntimeException("ControlDohyo no inicializado");
+        }
+        return controlDohyo.esperarResultado();
+    }
+    
+    /**
+     * Detiene el servidor
+     */
+    public void detenerServidor() throws Exception {
+        if (servidor != null) {
+            servidor.detener();
+        }
+    }
+    
+    /**
+     * Obtiene el historial de turnos del último combate
+     * @return List de Map con datos de cada turno
+     */
+    public List<Map<String, Object>> obtenerHistorialTurnos() {
+        if (controlDohyo != null) {
+            return controlDohyo.getHistorialTurnos();
+        }
+        return null;
+    }
+    
+    /**
      * Obtiene el ganador del último combate
      * @return Luchador ganador
      */
@@ -103,12 +140,45 @@ public class ControlPrincipalServidor {
         return null;
     }
     
+    /**
+     * Obtiene el puerto del servidor
+     */
+    public int getPuertoServidor() {
+        if (servidor != null) {
+            return servidor.getPuerto();
+        }
+        return -1;
+    }
+    
+    /**
+     * Obtiene la dirección del servidor
+     */
+    public String getDireccionServidor() {
+        if (servidor != null) {
+            return servidor.getDireccion();
+        }
+        return null;
+    }
+    
+    /**
+     * Obtiene el nombre del archivo de configuración
+     */
+    public String getNombreArchivoConfig() {
+        if (servidor != null && servidor.getArchivoConfig() != null) {
+            return servidor.getArchivoConfig().getName();
+        }
+        return null;
+    }
+    
+    /**
+     * Obtiene la vista
+     */
+    public VentanaPrincipalServidor getVista() {
+        return vista;
+    }
+    
     public ControlDohyo getControlDohyo() {
         return controlDohyo;
     }
-    
-    public void setControlDohyo(ControlDohyo controlDohyo) {
-        this.controlDohyo = controlDohyo;
-    }
-}
+}   
    

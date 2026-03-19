@@ -5,10 +5,14 @@
 package Edu.UDistrital.Avanzada.Taller3.Servidor.Control;
 
 /**
- *
- * @author natha
+ * Launcher del Servidor Sumo
+ * Punto de entrada de la aplicación
+ * @author nath
  */
 public class Launcher {
     
-    
+    public static void main(String[] args) {
+        // Solo instancia ControlPrincipalServidor
+        new ControlPrincipalServidor();
+    }
 }

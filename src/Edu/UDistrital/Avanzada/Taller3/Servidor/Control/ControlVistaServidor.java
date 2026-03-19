@@ -4,21 +4,33 @@
  */
 package Edu.UDistrital.Avanzada.Taller3.Servidor.Control;
 
+import Edu.UDistrital.Avanzada.Taller3.Servidor.Vista.VentanaPrincipalServidor;
 import java.io.File;
 
 /**
  * Control de la Vista del Servidor
+ * Intermediario entre Vista y ControlPrincipalServidor
  * @author nath
  */
 public class ControlVistaServidor {
     
+    private VentanaPrincipalServidor vista;
     private ControlPrincipalServidor controlPrincipal;
     
     /**
-     * Constructor
+     * Constructor que recibe ControlPrincipalServidor e instancia la Vista
      */
-    public ControlVistaServidor() {
-        this.controlPrincipal = new ControlPrincipalServidor();
+    public ControlVistaServidor(ControlPrincipalServidor controlPrincipal) {
+        this.controlPrincipal = controlPrincipal;
+        // Crear vista pasando this (ControlVistaServidor)
+        this.vista = new VentanaPrincipalServidor(this);
+    }
+    
+    /**
+     * Obtiene la vista
+     */
+    public VentanaPrincipalServidor getVista() {
+        return vista;
     }
     
     /**

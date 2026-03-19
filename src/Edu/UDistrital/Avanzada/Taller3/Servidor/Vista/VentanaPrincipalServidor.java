@@ -5,10 +5,8 @@
 
 package Edu.UDistrital.Avanzada.Taller3.Servidor.Vista;
 
-import Edu.UDistrital.Avanzada.Taller3.Servidor.Modelo.Servidor;
+import Edu.UDistrital.Avanzada.Taller3.Servidor.Control.ControlVistaServidor;
 import Edu.UDistrital.Avanzada.Taller3.Servidor.Modelo.Luchador;
-import Edu.UDistrital.Avanzada.Taller3.Servidor.Control.ControlDohyo;
-import Edu.UDistrital.Avanzada.Taller3.Servidor.Control.ControlKimarite;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
@@ -22,14 +20,17 @@ import java.util.Map;
  */
 public class VentanaPrincipalServidor extends JFrame {
     
-    private Servidor servidor;
-    private ControlDohyo controlDohyo;
-    private ControlKimarite controlKimarite;
+    private ControlVistaServidor controlVista;
     private JButton btnIniciar;
     private JTextArea txtResultados;
     private JLabel lblEstado;
     
-    public VentanaPrincipalServidor() {
+    /**
+     * Constructor único - Recibe ControlVistaServidor
+     */
+    public VentanaPrincipalServidor(ControlVistaServidor controlVista) {
+        this.controlVista = controlVista;
+        
         setTitle("Servidor Sumo");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(800, 600);
@@ -81,37 +82,38 @@ public class VentanaPrincipalServidor extends JFrame {
                     return;
                 }
                 
-                // Crear servidor
-                servidor = new Servidor(archivoConfig);
-                controlKimarite = new ControlKimarite();
-                controlDohyo = new ControlDohyo(servidor, controlKimarite);
+                // Inicializar servidor
+                if (!controlVista.inicializarServidor(archivoConfig)) {
+                    txtResultados.setText("Error al inicializar el servidor");
+                    return;
+                }
                 
                 // Mostrar información inicial
                 txtResultados.setText("");
                 txtResultados.append("╔════════════════════════════════════════╗\n");
                 txtResultados.append("║       SERVIDOR SUMO                    ║\n");
                 txtResultados.append("╚════════════════════════════════════════╝\n\n");
-                txtResultados.append("Archivo: " + archivoConfig.getName() + "\n");
-                txtResultados.append("Puerto: " + servidor.getPuerto() + "\n");
-                txtResultados.append("Dirección: " + servidor.getDireccion() + "\n\n");
+                txtResultados.append("Archivo: " + controlVista.getControlPrincipal().getNombreArchivoConfig() + "\n");
+                txtResultados.append("Puerto: " + controlVista.getControlPrincipal().getPuertoServidor() + "\n");
+                txtResultados.append("Dirección: " + controlVista.getControlPrincipal().getDireccionServidor() + "\n\n");
                 
                 // Iniciar servidor
-                servidor.iniciar();
+                controlVista.getControlPrincipal().iniciarServidor();
                 txtResultados.append("✓ Servidor iniciado\n");
                 txtResultados.append("Esperando 2 luchadores...\n\n");
                 lblEstado.setText("Estado: Esperando conexiones...");
                 
                 // Aceptar primer luchador
-                Socket cliente1 = servidor.aceptarCliente();
+                Socket cliente1 = controlVista.getControlPrincipal().aceptarCliente();
                 txtResultados.append("✓ Cliente 1 conectado\n");
-                Luchador luchador1 = controlDohyo.recibirLuchador(cliente1);
+                Luchador luchador1 = controlVista.getControlPrincipal().recibirLuchador(cliente1);
                 txtResultados.append("  Registrado: " + luchador1.getNombre() + 
                                    " (" + luchador1.getPeso() + " kg)\n\n");
                 
                 // Aceptar segundo luchador
-                Socket cliente2 = servidor.aceptarCliente();
+                Socket cliente2 = controlVista.getControlPrincipal().aceptarCliente();
                 txtResultados.append("✓ Cliente 2 conectado\n");
-                Luchador luchador2 = controlDohyo.recibirLuchador(cliente2);
+                Luchador luchador2 = controlVista.getControlPrincipal().recibirLuchador(cliente2);
                 txtResultados.append("  Registrado: " + luchador2.getNombre() + 
                                    " (" + luchador2.getPeso() + " kg)\n\n");
                 
@@ -121,10 +123,10 @@ public class VentanaPrincipalServidor extends JFrame {
                 lblEstado.setText("Estado: Combate en curso...");
                 
                 // Iniciar combate
-                controlDohyo.iniciarCombate(luchador1, luchador2);
+                controlVista.getControlPrincipal().iniciarCombate(luchador1, luchador2);
                 
                 // Esperar resultado
-                Luchador ganador = controlDohyo.esperarResultado();
+                Luchador ganador = controlVista.getControlPrincipal().esperarResultado();
                 
                 // Mostrar resultados
                 mostrarResultados(ganador);
@@ -134,7 +136,7 @@ public class VentanaPrincipalServidor extends JFrame {
                 cliente2.close();
                 
                 // Cerrar servidor
-                servidor.detener();
+                controlVista.getControlPrincipal().detenerServidor();
                 lblEstado.setText("Estado: Combate finalizado");
                 btnIniciar.setEnabled(true);
                 
@@ -153,7 +155,7 @@ public class VentanaPrincipalServidor extends JFrame {
      * Muestra los resultados del combate
      */
     private void mostrarResultados(Luchador ganador) {
-        List<Map<String, Object>> turnos = controlDohyo.getHistorialTurnos();
+        List<Map<String, Object>> turnos = controlVista.getControlPrincipal().obtenerHistorialTurnos();
         
         txtResultados.append("\n╔════════════════════════════════════════╗\n");
         txtResultados.append("║        HISTORIAL DE TURNOS             ║\n");
@@ -205,12 +207,5 @@ public class VentanaPrincipalServidor extends JFrame {
         }
         
         return null;
-    }
-    
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            VentanaPrincipalServidor ventana = new VentanaPrincipalServidor();
-            ventana.setVisible(true);
-        });
     }
 }
